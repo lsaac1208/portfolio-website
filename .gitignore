@@ -1,0 +1,49 @@
+# Kiro and Claude config
+.kiro/
+.claude/
+
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/venv/
+
+# Build outputs
+frontend/.next/
+frontend/out/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Environment files
+.env
+.env.local
+.env*.local
+backend/.env
+
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+logs/
+backend/logs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+
+# Misc
+*.bak
+*.tmp
+.cache/
