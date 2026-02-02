@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from datetime import datetime
 from typing import Optional, List
 import re
@@ -9,7 +9,7 @@ class PostBase(BaseModel):
     slug: str = Field(..., min_length=1, max_length=100, description="URL slug")
     content: str = Field(..., min_length=1, max_length=100000, description="文章内容")
     excerpt: Optional[str] = Field(None, max_length=500, description="文章摘要")
-    cover_image: Optional[HttpUrl] = Field(None, description="封面图片URL")
+    cover_image: Optional[str] = Field(None, description="封面图片URL")
     published: bool = Field(False, description="是否发布")
 
     @field_validator("slug")

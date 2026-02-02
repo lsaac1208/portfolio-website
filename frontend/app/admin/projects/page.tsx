@@ -1,160 +1,85 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit, Trash2, Star, ExternalLink, Loader2 } from "lucide-react";
-import { projectApi, showError, showSuccess } from "@/lib/api-client";
-import type { Project } from "@/lib/types";
+import { projectApi } from "@/lib/api-client";
+import { formatDate } from "@/lib/utils";
+import { Plus, Briefcase } from "lucide-react";
 
 export default function AdminProjectsPage() {
-  const [search, setSearch] = useState("");
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState<number | null>(null);
 
   useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const data = await projectApi.list();
+        setProjects(data as any[]);
+      } catch (error) {
+        console.error("获取项目失败:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchProjects();
   }, []);
 
-  const fetchProjects = async () => {
-    try {
-      const data = await projectApi.list();
-      setProjects(data);
-    } catch (error) {
-      showError("获取项目列表失败");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const handleDelete = async (id: number, slug: string) => {
-    if (!confirm("确定要删除这个项目吗？")) return;
-
-    setDeleting(id);
-    try {
-      await projectApi.delete(slug);
-      setProjects(projects.filter((p) => p.id !== id));
-      showSuccess("项目已删除");
-    } catch (error) {
-      showError("删除失败");
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">项目管理</h1>
-          <p className="text-muted-foreground mt-1">加载中...</p>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      {/* 标题 */}
-      <div className="flex items-center justify-between">
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">项目管理</h1>
-          <p className="text-muted-foreground mt-1">管理您的项目展示</p>
+          <h1 className="text-2xl font-bold text-foreground">项目管理</h1>
+          <p className="text-muted-foreground">管理您的项目作品</p>
         </div>
         <Button asChild>
           <Link href="/admin/projects/new">
             <Plus className="mr-2 h-4 w-4" />
-            添加项目
+            新建项目
           </Link>
         </Button>
       </div>
 
-      {/* 搜索 */}
-      <div className="flex gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="搜索项目..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 input-glow"
-          />
-        </div>
-      </div>
-
-      {/* 项目网格 */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredProjects.map((project) => (
-          <Card key={project.id} className="gradient-border card-hover">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <CardTitle className="flex items-center gap-2">
-                    <Link href={`/projects/${project.slug}`} className="hover:text-primary transition-colors">
-                      {project.name}
-                    </Link>
-                    {project.featured && (
-                      <Star className="h-4 w-4 text-yellow-500" />
-                    )}
-                  </CardTitle>
-                  <CardDescription className="mt-1 line-clamp-2">{project.description}</CardDescription>
+      {loading ? (
+        <div className="loading-spinner" />
+      ) : projects.length > 0 ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((project) => (
+            <Card key={project.id} className="card-hover p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="icon-box">
+                  <Briefcase className="h-6 w-6 text-primary" />
                 </div>
+                <span className={`badge ${project.featured ? "bg-primary/10 text-primary" : ""}`}>
+                  {project.featured ? "精选" : ""}
+                </span>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {project.tech_stack?.map((tech: string) => (
-                  <Badge key={tech} variant="secondary">{tech}</Badge>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-foreground mb-2">{project.name}</h3>
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{project.description}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{formatDate(project.created_at)}</span>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href={`/admin/projects/${project.slug}/edit`}>
-                    <Edit className="h-4 w-4 mr-1" />
-                    编辑
-                  </Link>
-                </Button>
-                {project.demo_url && (
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={project.demo_url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      演示
-                    </a>
-                  </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(project.id, project.slug)}
-                  disabled={deleting === project.id}
-                >
-                  {deleting === project.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  )}
+                  <Link href={`/admin/projects/${project.slug}/edit`}>编辑</Link>
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {filteredProjects.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          没有找到相关项目
+            </Card>
+          ))}
         </div>
+      ) : (
+        <Card className="card-base p-12 text-center">
+          <div className="icon-box mx-auto mb-4 w-16 h-16">
+            <Briefcase className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="text-lg font-medium mb-2">暂无项目</h3>
+          <p className="text-muted-foreground mb-4">开始添加您的第一个项目</p>
+          <Button asChild>
+            <Link href="/admin/projects/new">
+              <Plus className="mr-2 h-4 w-4" />
+              新建项目
+            </Link>
+          </Button>
+        </Card>
       )}
     </div>
   );

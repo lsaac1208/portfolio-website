@@ -1,5 +1,5 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
@@ -84,34 +84,33 @@ def update_user(
 @router.put("/{user_id}/role")
 def update_user_role(
     user_id: int,
-    role: str,
+    data: dict = Body(...),  # 接受 body
     current_user: User = Depends(get_admin_user),  # 仅管理员可更新
     db: Session = Depends(get_db)
 ):
     """更新用户角色（仅管理员）"""
-    try:
-        if role not in ["USER", "ADMIN"]:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="无效的角色")
+    role = data.get("role")
+    if not role:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="角色字段必填")
 
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
+    # 兼容大小写
+    role_lower = role.lower()
+    if role_lower not in ["user", "admin"]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="无效的角色")
 
-        # 不能修改最后一个管理员
-        if user.role == "ADMIN" and role != "ADMIN":
-            admin_count = db.query(User).filter(User.role == "ADMIN").count()
-            if admin_count <= 1:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="不能移除最后一个管理员")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="用户不存在")
 
-        user.role = role
-        db.commit()
-        return {"message": "角色更新成功"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        logger.exception("Failed to update user role")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="更新失败，请稍后重试")
+    # 不能修改最后一个管理员
+    if user.role.lower() == "admin" and role_lower != "admin":
+        admin_count = db.query(User).filter(User.role.lower() == "admin").count()
+        if admin_count <= 1:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="不能移除最后一个管理员")
+
+    user.role = role_lower  # 使用小写
+    db.commit()
+    return {"message": "角色更新成功"}
 
 
 @router.delete("/{user_id}")

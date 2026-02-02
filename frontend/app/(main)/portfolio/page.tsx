@@ -1,95 +1,60 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { portfolioApi, showError } from "@/lib/api-client";
-import type { Portfolio } from "@/lib/types";
+import { Image, ArrowRight } from "lucide-react";
 
-const categories = [
-  { name: "全部", value: "all" },
-  { name: "UI 设计", value: "design" },
-  { name: "摄影", value: "photography" },
-  { name: "插画", value: "illustration" },
-];
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-export default function PortfolioPage() {
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [portfolioItems, setPortfolioItems] = useState<Portfolio[]>([]);
-  const [loading, setLoading] = useState(true);
+async function getPortfolio() {
+  try {
+    const res = await fetch(`${API_BASE}/api/portfolio`, { cache: "no-store" });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch { return []; }
+}
 
-  useEffect(() => {
-    fetchPortfolio();
-  }, []);
-
-  const fetchPortfolio = async () => {
-    try {
-      const data = await portfolioApi.list();
-      setPortfolioItems(data);
-    } catch (error) {
-      showError("获取作品集失败");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredItems = activeCategory === "all"
-    ? portfolioItems
-    : portfolioItems.filter(item => item.category === activeCategory);
+export default async function PortfolioPage() {
+  const items = await getPortfolio();
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-      <div className="mb-12 text-center">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          作品集
-        </h1>
-        <p className="mt-2 text-lg text-muted-foreground">
-          精选设计、摄影和插画作品
-        </p>
-      </div>
-
-      {/* 分类筛选 */}
-      <div className="mb-8 flex flex-wrap justify-center gap-2">
-        {categories.map((cat) => (
-          <Button
-            key={cat.value}
-            variant={activeCategory === cat.value ? "default" : "outline"}
-            onClick={() => setActiveCategory(cat.value)}
-          >
-            {cat.name}
-          </Button>
-        ))}
-      </div>
-
-      {/* 作品网格 */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredItems.map((item) => (
-          <Card
-            key={item.id}
-            className="group gradient-border overflow-hidden cursor-pointer card-hover"
-          >
-            <div className="aspect-square bg-muted relative overflow-hidden">
-              {/* 占位图 - 实际应使用真实图片 */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-4xl font-bold text-primary/30">
-                  {item.id}
-                </span>
-              </div>
-              {/* 悬停覆盖层 */}
-              <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Button variant="secondary">查看详情</Button>
-              </div>
+    <div className="page-container">
+      <section className="page-section">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h1 className="page-title">作品集</h1>
+            <p className="page-description">精选作品展示，瀑布流布局呈现</p>
+          </div>
+          {items.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {items.map((item: any) => (
+                <Card key={item.id} className="card-hover overflow-hidden">
+                  <div className="aspect-video bg-muted flex items-center justify-center">
+                    {item.image_url ? (
+                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <Image className="h-12 w-12 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="p-6">
+                    <span className="badge mb-3">{item.category}</span>
+                    <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{item.description}</p>
+                    {item.link_url && (
+                      <a href={item.link_url} target="_blank" rel="noopener" className="inline-flex items-center text-sm font-medium text-primary">
+                        查看详情 <ArrowRight className="ml-1 h-4 w-4" />
+                      </a>
+                    )}
+                  </div>
+                </Card>
+              ))}
             </div>
-            <div className="p-4">
-              <h3 className="font-semibold">{item.title}</h3>
-              <p className="text-sm text-muted-foreground">
-                {categories.find(c => c.value === item.category)?.name}
-              </p>
+          ) : (
+            <div className="text-center py-16">
+              <div className="icon-box mx-auto mb-4 w-16 h-16"><Image className="h-8 w-8 text-primary" /></div>
+              <h3 className="text-lg font-medium">暂无作品</h3>
             </div>
-          </Card>
-        ))}
-      </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

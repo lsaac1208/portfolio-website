@@ -26,81 +26,6 @@ def get_services(db: Session = Depends(get_db)):
     return services
 
 
-@router.get("/{slug}", response_model=ServiceResponse)
-def get_service(slug: str, db: Session = Depends(get_db)):
-    service = db.query(Service).filter(Service.slug == slug, Service.active == True).first()
-    if not service:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="服务不存在")
-    return service
-
-
-@router.post("", response_model=ServiceResponse)
-def create_service(
-    service_data: ServiceCreate,
-    current_user: User = Depends(get_admin_user),  # 仅管理员可创建
-    db: Session = Depends(get_db)
-):
-    try:
-        service = Service(**service_data.model_dump())
-        db.add(service)
-        db.commit()
-        db.refresh(service)
-        return service
-    except Exception as e:
-        db.rollback()
-        logger.exception("Failed to create service")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="创建失败，请稍后重试")
-
-
-@router.put("/{slug}", response_model=ServiceResponse)
-def update_service(
-    slug: str,
-    service_data: ServiceUpdate,
-    current_user: User = Depends(get_admin_user),  # 仅管理员可更新
-    db: Session = Depends(get_db)
-):
-    try:
-        service = db.query(Service).filter(Service.slug == slug).first()
-        if not service:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="服务不存在")
-
-        for key, value in service_data.model_dump(exclude_unset=True).items():
-            setattr(service, key, value)
-
-        db.commit()
-        db.refresh(service)
-        return service
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        logger.exception("Failed to update service")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="更新失败，请稍后重试")
-
-
-@router.delete("/{slug}")
-def delete_service(
-    slug: str,
-    current_user: User = Depends(get_admin_user),  # 仅管理员可删除
-    db: Session = Depends(get_db)
-):
-    try:
-        service = db.query(Service).filter(Service.slug == slug).first()
-        if not service:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="服务不存在")
-
-        # 软删除：设置为不活跃
-        service.active = False
-        db.commit()
-        return {"message": "服务已删除"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        logger.exception("Failed to delete service")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="删除失败，请稍后重试")
-
-
 # ============ 询价端点 ============
 # 公开端点：创建询价（无需登录）
 @router.post("/inquiries", response_model=InquiryResponse)
@@ -254,3 +179,80 @@ def update_order(
         db.rollback()
         logger.exception("Failed to update order")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="更新失败，请稍后重试")
+
+
+# ============ 服务 CRUD 端点（放在最后避免路由冲突）===========
+
+@router.post("", response_model=ServiceResponse)
+def create_service(
+    service_data: ServiceCreate,
+    current_user: User = Depends(get_admin_user),  # 仅管理员可创建
+    db: Session = Depends(get_db)
+):
+    try:
+        service = Service(**service_data.model_dump())
+        db.add(service)
+        db.commit()
+        db.refresh(service)
+        return service
+    except Exception as e:
+        db.rollback()
+        logger.exception("Failed to create service")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="创建失败，请稍后重试")
+
+
+@router.get("/{slug}", response_model=ServiceResponse)
+def get_service(slug: str, db: Session = Depends(get_db)):
+    service = db.query(Service).filter(Service.slug == slug, Service.active == True).first()
+    if not service:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="服务不存在")
+    return service
+
+
+@router.put("/{slug}", response_model=ServiceResponse)
+def update_service(
+    slug: str,
+    service_data: ServiceUpdate,
+    current_user: User = Depends(get_admin_user),  # 仅管理员可更新
+    db: Session = Depends(get_db)
+):
+    try:
+        service = db.query(Service).filter(Service.slug == slug).first()
+        if not service:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="服务不存在")
+
+        for key, value in service_data.model_dump(exclude_unset=True).items():
+            setattr(service, key, value)
+
+        db.commit()
+        db.refresh(service)
+        return service
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.exception("Failed to update service")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="更新失败，请稍后重试")
+
+
+@router.delete("/{slug}")
+def delete_service(
+    slug: str,
+    current_user: User = Depends(get_admin_user),  # 仅管理员可删除
+    db: Session = Depends(get_db)
+):
+    try:
+        service = db.query(Service).filter(Service.slug == slug).first()
+        if not service:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="服务不存在")
+
+        # 软删除：设置为不活跃
+        service.active = False
+        db.commit()
+        return {"message": "服务已删除"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.exception("Failed to delete service")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="删除失败，请稍后重试")

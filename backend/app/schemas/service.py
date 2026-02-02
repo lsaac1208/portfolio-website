@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from typing import Optional, List
 
@@ -11,7 +11,7 @@ class ServiceBase(BaseModel):
     price_type: str = Field("fixed", description="定价方式: fixed/hourly/custom")
     price_from: Optional[int] = Field(None, ge=0, description="起始价格")
     price_to: Optional[int] = Field(None, ge=0, description="结束价格")
-    icon: Optional[HttpUrl] = Field(None, description="图标URL")
+    icon: Optional[str] = Field(None, description="图标URL")
     features: Optional[List[str]] = Field(None, description="功能列表")
     estimated_days: Optional[int] = Field(None, ge=1, le=365, description="预估天数")
     sort_order: int = Field(0, ge=0, description="排序")

@@ -36,7 +36,7 @@ export default function NewServicePage() {
         slug: formData.slug,
         description: formData.description,
         content: formData.content || undefined,
-        price_type: formData.price_type,
+        price_type: formData.price_type as "fixed" | "hourly" | "custom",
         price_from: formData.price_from ? parseInt(formData.price_from) : undefined,
         price_to: formData.price_to ? parseInt(formData.price_to) : undefined,
         features: formData.features.filter((f: string) => f.trim()),

@@ -40,7 +40,7 @@ export default function LoginPage() {
       userManager.setUser(user);
 
       // 根据用户角色跳转到不同页面
-      if (user.role === "ADMIN") {
+      if (user.role === "admin") {
         router.push("/admin/dashboard");
       } else {
         router.push("/");

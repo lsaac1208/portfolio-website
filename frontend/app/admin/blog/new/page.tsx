@@ -27,7 +27,13 @@ export default function NewBlogPage() {
     setLoading(true);
 
     try {
-      await blogApi.create(formData);
+      // 过滤空字符串为 undefined，避免 HttpUrl 验证失败
+      const submitData = {
+        ...formData,
+        cover_image: formData.cover_image || undefined,
+        excerpt: formData.excerpt || undefined,
+      };
+      await blogApi.create(submitData);
       showSuccess("文章创建成功");
       router.push("/admin/blog");
     } catch (err) {

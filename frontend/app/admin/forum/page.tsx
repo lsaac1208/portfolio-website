@@ -1,138 +1,75 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { forumApi } from "@/lib/api-client";
 import { formatDate } from "@/lib/utils";
-import { Search, Eye, MessageSquare, Trash2, CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { forumApi, showError, showSuccess } from "@/lib/api-client";
-import type { Topic } from "@/lib/types";
+import { MessageSquare, Eye, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function AdminForumPage() {
-  const [search, setSearch] = useState("");
-  const [topics, setTopics] = useState<Topic[]>([]);
+  const [topics, setTopics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState<number | null>(null);
 
   useEffect(() => {
+    const fetchTopics = async () => {
+      try {
+        const data = await forumApi.adminListTopics();
+        setTopics(data as any[]);
+      } catch (error) {
+        console.error("获取帖子失败:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchTopics();
   }, []);
 
-  const fetchTopics = async () => {
-    try {
-      const data = await forumApi.adminListTopics();
-      setTopics(data);
-    } catch (error) {
-      showError("获取话题列表失败");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredTopics = topics.filter(topic =>
-    topic.title.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const handleDelete = async (id: number) => {
-    if (!confirm("确定要删除这个话题吗？")) return;
-
-    setProcessing(id);
-    try {
-      await forumApi.adminDeleteTopic(id);
-      setTopics(topics.filter(t => t.id !== id));
-      showSuccess("话题已删除");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "删除失败";
-      showError(message);
-    } finally {
-      setProcessing(null);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">论坛管理</h1>
-          <p className="text-muted-foreground mt-1">加载中...</p>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8">
-      {/* 标题 */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">论坛管理</h1>
-        <p className="text-muted-foreground mt-1">管理论坛话题和评论（{topics.length} 个话题）</p>
+    <div className="p-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-foreground">论坛管理</h1>
+        <p className="text-muted-foreground">管理论坛帖子</p>
       </div>
 
-      {/* 搜索 */}
-      <div className="flex gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="搜索话题..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 input-glow"
-          />
-        </div>
-      </div>
-
-      {/* 话题列表 */}
-      <Card className="gradient-border">
-        <CardContent className="p-0">
-          <div className="divide-y divide-border">
-            {filteredTopics.map((topic) => (
-              <div key={topic.id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Link href={`/forum/${topic.id}`} className="font-medium hover:text-primary transition-colors truncate">
-                      {topic.title}
-                    </Link>
+      {loading ? (
+        <div className="loading-spinner" />
+      ) : topics.length > 0 ? (
+        <Card className="card-base">
+          <div className="divide-y divide-border/50">
+            {topics.map((topic) => (
+              <div key={topic.id} className="p-4 sm:p-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="icon-box">
+                    <MessageSquare className="h-6 w-6 text-primary" />
                   </div>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                    <span>作者ID: {topic.author_id}</span>
-                    <span>{formatDate(topic.created_at)}</span>
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-4 w-4" />
-                      {topic.views}
-                    </span>
+                  <div>
+                    <h3 className="font-medium text-foreground">{topic.title}</h3>
+                    <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <User className="h-3.5 w-3.5" />
+                        {topic.author_id || "未知"}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3.5 w-3.5" />
+                        {topic.views || 0}
+                      </span>
+                      <span>{formatDate(topic.created_at)}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(topic.id)}
-                    disabled={processing === topic.id}
-                    title="删除话题"
-                  >
-                    {processing === topic.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    )}
-                  </Button>
-                </div>
+                <Button variant="ghost" size="sm">查看详情</Button>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-
-      {filteredTopics.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          没有找到相关话题
-        </div>
+        </Card>
+      ) : (
+        <Card className="card-base p-12 text-center">
+          <div className="icon-box mx-auto mb-4 w-16 h-16">
+            <MessageSquare className="h-8 w-8 text-primary" />
+          </div>
+          <h3 className="text-lg font-medium mb-2">暂无帖子</h3>
+        </Card>
       )}
     </div>
   );

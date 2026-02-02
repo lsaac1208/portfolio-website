@@ -7,8 +7,8 @@ class PortfolioBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=100, description="作品标题")
     category: str = Field(..., min_length=1, max_length=50, description="分类")
     description: Optional[str] = Field(None, max_length=1000, description="描述")
-    image_url: Optional[HttpUrl] = Field(None, description="图片URL")
-    link_url: Optional[HttpUrl] = Field(None, description="作品链接")
+    image_url: Optional[str] = Field(None, description="图片URL")
+    link_url: Optional[str] = Field(None, description="作品链接")
     sort_order: int = Field(0, ge=0, description="排序")
 
 

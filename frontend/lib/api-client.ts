@@ -5,6 +5,7 @@ import type {
   Post,
   PostCreate,
   Topic,
+  TopicListResponse,
   TopicCreate,
   Comment,
   CommentCreate,
@@ -13,6 +14,7 @@ import type {
   Portfolio,
   PortfolioCreate,
   Service,
+  ServiceCreate,
   Inquiry,
   InquiryCreate,
   InquiryUpdate,
@@ -341,12 +343,12 @@ export const blogApi = {
 
 // 论坛 API
 export const forumApi = {
-  listTopics: async (params?: { page?: number; limit?: number }): Promise<Topic[]> => {
+  listTopics: async (params?: { page?: number; limit?: number }): Promise<TopicListResponse> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
     const query = searchParams.toString() ? `?${searchParams.toString()}` : "";
-    return request<Topic[]>(`/api/forum/topics${query}`);
+    return request<TopicListResponse>(`/api/forum/topics${query}`);
   },
 
   getTopic: async (id: number): Promise<Topic> => {

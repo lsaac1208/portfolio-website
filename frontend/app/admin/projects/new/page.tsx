@@ -32,15 +32,16 @@ export default function NewProjectPage() {
 
     try {
       const tech_stack = formData.tech_stack.filter((t: string) => t.trim());
+      // 过滤 URL 字段的空字符串为 undefined
       const data: ProjectCreate = {
         name: formData.name,
         slug: formData.slug,
         description: formData.description,
         content: formData.content,
-        cover_image: formData.cover_image,
+        cover_image: formData.cover_image || undefined,
         github_url: formData.github_url || undefined,
         demo_url: formData.demo_url || undefined,
-        tech_stack,
+        tech_stack: tech_stack.length > 0 ? tech_stack : undefined,
         featured: formData.featured,
       };
       await projectApi.create(data);

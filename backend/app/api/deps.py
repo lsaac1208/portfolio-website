@@ -16,7 +16,7 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
 
 async def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
     """获取管理员用户，如果用户不是管理员则抛出异常"""
-    if current_user.role != "ADMIN":
+    if current_user.role.lower() != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="需要管理员权限"
@@ -30,7 +30,7 @@ def require_role(required_role: str):
     使用方式: Depends(require_role("ADMIN"))
     """
     async def role_checker(current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role != required_role:
+        if current_user.role.lower() != required_role.lower():
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"需要 {required_role} 权限"

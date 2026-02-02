@@ -57,6 +57,14 @@ export interface Topic {
   created_at: string;
   updated_at: string;
   comments_count?: number;
+  topics?: Comment[];
+}
+
+export interface TopicListResponse {
+  topics: Topic[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface TopicCreate {
@@ -70,6 +78,7 @@ export interface Comment {
   author_id: number;
   author?: User;
   topic_id: number;
+  likes: number;
   created_at: string;
 }
 
@@ -177,7 +186,7 @@ export type InquiryStatus = "pending" | "contacted" | "quoted" | "closed";
 export type OrderStatus = "pending" | "confirmed" | "working" | "reviewing" | "completed" | "cancelled";
 
 // 用户角色
-export type UserRole = "USER" | "ADMIN";
+export type UserRole = "USER" | "ADMIN" | "admin";
 
 // 询价
 export interface Inquiry {

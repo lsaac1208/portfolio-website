@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from typing import Optional, List
 
@@ -8,10 +8,10 @@ class ProjectBase(BaseModel):
     slug: str = Field(..., min_length=1, max_length=100, description="URL slug")
     description: str = Field(..., min_length=1, max_length=500, description="简短描述")
     content: Optional[str] = Field(None, description="详细介绍")
-    cover_image: Optional[HttpUrl] = Field(None, description="封面图片URL")
+    cover_image: Optional[str] = Field(None, description="封面图片URL")
     tech_stack: Optional[List[str]] = Field(None, description="技术栈列表")
-    github_url: Optional[HttpUrl] = Field(None, description="GitHub链接")
-    demo_url: Optional[HttpUrl] = Field(None, description="演示链接")
+    github_url: Optional[str] = Field(None, description="GitHub链接")
+    demo_url: Optional[str] = Field(None, description="演示链接")
     featured: bool = Field(False, description="是否精选")
     sort_order: int = Field(0, ge=0, description="排序")
 
